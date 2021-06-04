@@ -1,59 +1,65 @@
 import random
 
 
-def get_word(file):
+def get_word(file, level):
    with open(file, "r") as f:
-      lines=f.readlines()
-      random_line = random.choice(lines)
-      splitted_line = random_line.split(' | ')
-      imported_country = splitted_line[0]
-      # imported_city = splitted_line[1]
-   return imported_country # , imported_city
+        lines=f.readlines()
+        random_line = random.choice(lines)
+        splitted_line = random_line.split(' | ')
+        splitted_line[1]=splitted_line[1].removesuffix("\n")
+        if level > 3:
+            chosen_word = random.choice(splitted_line)
+        else:
+            chosen_word = splitted_line[0]
+   return chosen_word 
 
 
-def play(word):
+def play(word, lives):
     word_completion = "_" * len(word)
     guessed = False
-    guessed_letters = []
-    guessed_words = []
-    lives = 7
+    guessed_letters = [] #korábban tippelt betűk, mindig nagy
+    guessed_words = [] #korábban tippelt szavak
     print("Let's play Hangman!")
     print(display_hangman(lives))
     print(word_completion)
     print("\n")
     while not guessed and lives > 0:
         guess = input("Please guess a letter or word: ")
-        if len(guess) == 1 and guess.isalpha():
-            if guess.upper() in guessed_letters:
-                print("You already guessed the letter", guess)
-            elif guess.upper() not in word.upper():
-                print(guess, "is not in the word.")
-                lives -= 1
-                guessed_letters.append(guess.upper())
+        if len(guess) == 1 and guess.isalpha(): #egy betűt tippelt
+            if guess.upper() in guessed_letters: #tippelt betű már volt, nagy betűt nagy betűvel összehasonlít
+                print("You already guessed the letter", guess) #tippelt betű kiírása
+                print("Tried letters: ", end =" ") #korábban tippelt betűk kiírása
+                print(', '.join(guessed_letters)) #korábban tippelt betűk kiírása
+            elif guess.upper() not in word.upper(): #tippelt betű nincs a keresett szóban, nagy betűt nagy betűvel összehasonlít
+                print(guess, "is not in the word.") #tippelt betű kiírása
+                print("Tried letters: ", end =" ") #korábban tippelt betűk kiírása
+                print(', '.join(guessed_letters)) #korábban tippelt betűk kiírása
+                lives -= 1 #élet csökkentése
+                guessed_letters.append(guess.upper()) #tippelt betű hozzáadása a korábban tippeltekhez
             else:
-                print("Good job,", guess, "is in the word!")
-                guessed_letters.append(guess.upper())
-                word_as_list = list(word_completion)
-                indices = [i for i, letter in enumerate(word) if letter == guess]
-                for index in indices:
-                    word_as_list[index] = guess
-                word_completion = "".join(word_as_list)
-                if "_" not in word_completion:
+                print("Good job,", guess, "is in the word!") #tippelt betű benne van a szóban
+                guessed_letters.append(guess.upper()) #tippelt betű hozzáadása a korábban tippeltekhez
+                word_as_list = list(word_completion) #string szétszedése elemekre
+                indices = [i for i, letter in enumerate(word.upper()) if letter == guess.upper()] #tippelt betű helyeinek megkeresése a szóban
+                for index in indices: #tippelt betű kitöltése
+                    word_as_list[index] = (list(word))[index]
+                word_completion = "".join(word_as_list) #betűelemek összefűzése stringgé
+                if "_" not in word_completion: #nincs több _, nyert
                     guessed = True
-        elif len(guess) == len(word) and guess.isalpha():
-            if guess.upper() in guessed_words:
-                print("You already guessed the word", guess)
-            elif guess.upper() != word.upper():
+        elif len(guess) == len(word) and guess.isalpha(): #szót tippelt
+            if guess.upper() in guessed_words: #tippelt szó már volt, nagy betűt nagy betűvel összehasonlít
+                print("You already guessed the word", guess) #tippelt szó kiírása
+            elif guess.upper() != word.upper(): #tippelt szó nem talált
                 print(guess, "is not the word.")
-                lives -= 1
-                guessed_words.append(guess.upper())
-            else:
-                guessed = True
+                lives -= 1 #élet csökkentése
+                guessed_words.append(guess.upper()) #tippelt szó hozzáadása a korábbi tippekhez
+            else: #tippelt szó talált, nyert
+                guessed = True 
                 word_completion = word
-        elif guess.upper() == "QUIT":
+        elif guess.upper() == "QUIT": #kilépett
             print("Goodbye")
             quit()
-        else:
+        else: #érvénytelen tippelés
             print("Not a valid guess.")
         print(display_hangman(lives))
         print(word_completion)
@@ -150,12 +156,18 @@ def display_hangman(lives):
 
 
 def main():
-    word = get_word("countries-and-capitals.txt")
-    print(word)
-    play(word)
+    level = int(input("Please choose level (1-5): "))
+
+    word = get_word("countries-and-capitals.txt", level)
+    
+    lives = 8-level
+
+    play(word, lives)
     while input("Play Again? (Y/N) ").upper() == "Y":
-        word = get_word()
-        play(word)
+        level = input("Please choose level (1-5): ")
+        word = get_word("countries-and-capitals.txt")
+        lives = 8-int(level)
+        play(word, lives)
 
 
 if __name__ == "__main__":
